@@ -1,7 +1,9 @@
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-export const ALLWAYS_ACTIVE = "*";
+const ID_PLACEHOLDER = ":id";
+const WILDCARD = "*";
+export const ALLWAYS_ACTIVE = WILDCARD;
 
 const splitAndSanitise = (value: string) => {
   return value
@@ -123,7 +125,7 @@ export class InjectContainer {
           (scopeFromStore = ["foo, "bar", "fizz""] & activeScope = ["foo"]) => Can't be valid either
         */
           activeScope.length === scopeFromStore.length ||
-          scopeFromStore[scopeFromStore.length - 1] === "*"
+          scopeFromStore[scopeFromStore.length - 1] === WILDCARD
       )
       .reduce((acc, activeScope) => {
         if (acc) {
@@ -135,7 +137,7 @@ export class InjectContainer {
           for (let index = 0; index < scopeFromStore.length; index++) {
             const scopeSegmentFromStore = assertDefined(scopeFromStore[index]);
 
-            if (scopeSegmentFromStore === "*") {
+            if (scopeSegmentFromStore === WILDCARD) {
               /*
                 We found a wildcard! 
                 If this is our first round, scopeFromStore is "ALWAYS_ACTIVE".
@@ -151,7 +153,7 @@ export class InjectContainer {
             if (activeScopeSegment === scopeSegmentFromStore) {
               result = true;
             } else if (
-              scopeSegmentFromStore === ":id" &&
+              scopeSegmentFromStore === ID_PLACEHOLDER &&
               this.isId(activeScopeSegment)
             ) {
               result = true;
