@@ -5,11 +5,8 @@ const ID_PLACEHOLDER = ":id";
 const WILDCARD = "*";
 export const ALLWAYS_ACTIVE = WILDCARD;
 
-const splitAndSanitise = (value: string) => {
-  return value
-    .split("/")
-    .filter((segment) => segment !== "#" && isNaN(Number(segment)));
-};
+const splitAndSanitise = (value: string) =>
+  value.split("/").filter((segment) => segment);
 
 type InjectableClass<T extends new () => InstanceType<T>> =
   (new () => InstanceType<T>) & {
@@ -33,6 +30,9 @@ const assertDefined = <T extends {}>(item: T | undefined): NonNullable<T> => {
 
   throw new Error("Asserted value was undefined");
 };
+
+const isId = (value: string) =>
+  Boolean(Number(value)) || UUID_REGEX.test(value);
 
 export class InjectContainer {
   private activeScopes: Set<string> = new Set([]);
@@ -92,9 +92,9 @@ export class InjectContainer {
     });
   };
 
-  private isAnyActive = (scopes: string[]) => {
-    for (const scope of scopes) {
-      if (this.compareAgainstActiveScope(scope)) {
+  private isAnyActive = (scopesForStore: string[]) => {
+    for (const scope of scopesForStore) {
+      if (this.isScopeActive(scope)) {
         return true;
       }
     }
@@ -107,8 +107,8 @@ export class InjectContainer {
    * @argument scope e.g.: '/test/asd/:id'
    * @returns true if match was found else false
    */
-  private compareAgainstActiveScope = (storeData: string) => {
-    const scopeFromStore = splitAndSanitise(storeData);
+  private isScopeActive = (scope: string) => {
+    const scopeFromStore = splitAndSanitise(scope);
 
     return Array.from(this.activeScopes)
       .map((activeScope) => splitAndSanitise(activeScope))
@@ -154,7 +154,7 @@ export class InjectContainer {
               result = true;
             } else if (
               scopeSegmentFromStore === ID_PLACEHOLDER &&
-              this.isId(activeScopeSegment)
+              isId(activeScopeSegment)
             ) {
               result = true;
             } else {

@@ -58,7 +58,7 @@ inject.register(TestStore, ALLWAYS_ACTIVE)
 
 ### IDs
 
-The `:id` placeholder supports `UUID-4`
+The `:id` placeholder supports `Numbers` and `UUID-4`
 
 ## SETUP
 

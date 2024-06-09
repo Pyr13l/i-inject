@@ -1,5 +1,5 @@
 import { test, describe, expect } from "@jest/globals";
-import { InjectContainer } from ".";
+import { InjectContainer } from "./index";
 
 class Foo {
   public static typeName = "Foo";
@@ -128,10 +128,19 @@ describe("Tests for Inject", () => {
     expect(inst).toBeDefined();
   });
 
-  test("That scopes work with :ids", () => {
+  test("That scopes work with :ids - uuid4", () => {
     const injectContainer = new InjectContainer();
     injectContainer.register(Foo, "/foo/:id/bar");
     injectContainer.enter("/foo/712708ca-485c-11ee-be56-0242ac120002/bar");
+
+    const inst = injectContainer.get(Foo);
+    expect(inst).toBeDefined();
+  });
+
+  test("That scopes work with :ids - number", () => {
+    const injectContainer = new InjectContainer();
+    injectContainer.register(Foo, "/foo/:id/bar");
+    injectContainer.enter("/foo/712708/bar");
 
     const inst = injectContainer.get(Foo);
     expect(inst).toBeDefined();
