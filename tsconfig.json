@@ -8,6 +8,7 @@
     "noEmit": false,
     "strict": true,
     "noImplicitAny": true,
+    "stripInternal": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
     "strictBindCallApply": true,

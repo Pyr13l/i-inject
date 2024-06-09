@@ -35,8 +35,10 @@ const isId = (value: string) =>
   Boolean(Number(value)) || UUID_REGEX.test(value);
 
 export class InjectContainer {
+  /** @internal */
   private activeScopes: Set<string> = new Set([]);
-  
+
+  /** @internal */
   private definitions: InjectData<any> = {};
 
   public register = <T extends InjectableClass<T>>(
@@ -84,6 +86,7 @@ export class InjectContainer {
     this.dropAllWithoutActiveScope();
   };
 
+  /** @internal */
   private dropAllWithoutActiveScope = () => {
     Object.values(this.definitions).forEach((definition) => {
       if (definition.instance && !this.isAnyActive(definition.scopes)) {
@@ -92,6 +95,7 @@ export class InjectContainer {
     });
   };
 
+  /** @internal */
   private isAnyActive = (scopesForStore: string[]) => {
     for (const scope of scopesForStore) {
       if (this.isScopeActive(scope)) {
@@ -106,6 +110,7 @@ export class InjectContainer {
    * checks the supplied scope against the activeScopes
    * @argument scope e.g.: '/test/asd/:id'
    * @returns true if match was found else false
+   * @internal
    */
   private isScopeActive = (scope: string) => {
     const scopeFromStore = splitAndSanitise(scope);
