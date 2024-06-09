@@ -1,6 +1,6 @@
 {
   "name": "@mreinlaender/i-inject",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "Small DI-Container for typescript based frontend applications. \nContains scope handling for automation via routes",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
