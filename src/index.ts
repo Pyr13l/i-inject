@@ -34,21 +34,21 @@ const assertDefined = <T extends {}>(item: T | undefined): NonNullable<T> => {
 
 export class InjectContainer {
   private activeScopes: Set<string> = new Set([]);
-  private definition: InjectData<any> = {};
-  private isId = (value: string) => UUID_REGEX.test(value);
+  
+  private definitions: InjectData<any> = {};
 
   public register = <T extends InjectableClass<T>>(
     type: T,
     ...scopes: string[]
   ) => {
-    if (this.definition[type.typeName]) {
+    if (this.definitions[type.typeName]) {
       throw new Error(`Store already registered! Store name: ${type.typeName}`);
     }
-    this.definition[type.typeName] = { constructor: type, scopes };
+    this.definitions[type.typeName] = { constructor: type, scopes };
   };
 
   public get = <T extends InjectableClass<T>>(type: T): InstanceType<T> => {
-    const definition = assertDefined(this.definition[type.typeName]);
+    const definition = assertDefined(this.definitions[type.typeName]);
     if (!definition.instance && this.isAnyActive(definition.scopes)) {
       definition.instance = new definition.constructor();
       return definition.instance;
@@ -83,7 +83,7 @@ export class InjectContainer {
   };
 
   private dropAllWithoutActiveScope = () => {
-    Object.values(this.definition).forEach((definition) => {
+    Object.values(this.definitions).forEach((definition) => {
       if (definition.instance && !this.isAnyActive(definition.scopes)) {
         definition.instance = undefined;
       }
@@ -100,11 +100,11 @@ export class InjectContainer {
     return false;
   };
 
-  /*
-   * const storeData = ['/foo/bar','/test', '/test/asd', '/test/asd/:id']
-   *
+  /**
+   * checks the supplied scope against the activeScopes
+   * @argument scope e.g.: '/test/asd/:id'
+   * @returns true if match was found else false
    */
-
   private compareAgainstActiveScope = (storeData: string) => {
     const scopeFromStore = splitAndSanitise(storeData);
 
@@ -122,7 +122,6 @@ export class InjectContainer {
 
           (scopeFromStore = ["foo, "bar", "fizz""] & activeScope = ["foo"]) => Can't be valid either
         */
-          //
           activeScope.length === scopeFromStore.length ||
           scopeFromStore[scopeFromStore.length - 1] === "*"
       )
@@ -140,7 +139,7 @@ export class InjectContainer {
               /*
                 We found a wildcard! 
                 If this is our first round, scopeFromStore is "ALWAYS_ACTIVE".
-                If not, all the steps behind us are valid, because we break on false
+                If not, all the steps behind us are valid.
                 -> return true;
               */
               result = true;

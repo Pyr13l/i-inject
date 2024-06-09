@@ -1,49 +1,117 @@
 # i-inject
 
-A scoped injection-container intended for use in a Routed SPA, written in TypeScript.
+A multi-scope singleton injection-container intended for use in a Routed SPA, written in TypeScript.
 
-## Concept
+- Lazy initialization of instances
+- Automaticly drops stored instances if the scope changes to something they were intended for
 
-### Register stores with n-scopes
+## Usage
+
+test-store.ts
 
 ```
-class Test {
- public static typeName = "Test";
+class TestStore {
+    public static typeName = "TestStore";
 
+    // your code here
+    ...
 }
 
-// register(type: T, ...scopes[])
-inject.register(Test, '/test/*', '/something/differen/test'
+inject.register(TestStore, '/test/*', 'anther/route/:id/test', '/something/differen/test');
+
+```
+
+test-component.ts
+
+```
+const TestComponent = () => {
+    const { myList, onAddNewItem } = inject.get(TestStore)
+
+    const displayList = myList.map(iten => <div>{item}</div>);
+
+    return (
+        <div>
+            {displayList}
+            <button onClick={onAddNewItem}>Add New</button>
+        </div>
+    );
+}
 ```
 
 ### Use the wildcard `'*'` to permit everything further "down" the current scope.
 
-Leading to
+#### Example:
 
 ```
-inject.register(Test, '*');
+inject.register(TestStore, '/test/*');
 ```
 
-being allways available
+Will be accessible in `/test/anything/goes` and `/test/13asd213-12asd1-11as1d3-a2s1d312asd/even/this`
 
-### Keep the `current-scope` in line with `window.location.pathname` using the `changeTo`-function
+#### A convenience export `const ALLWAYS_ACTIVE = '*'` is provided
 
-React example using react-router-dom:
+leading to
 
 ```
-const location = useLocation();
-
-useEffect(() => {
-    inject.changeTo(location.pathname)
-}, [location])
+inject.register(TestStore, ALLWAYS_ACTIVE)
 ```
 
-### Enjoy accessing singleton instances from where you want, and only from there.
+### IDs
+
+The `:id` placeholder supports `UUID-4`
+
+## SETUP
+
+You can leave and enter scopes manually, but aside from specific cases (e.g. opening a modal /wizard) it's not advised.
+
+To keep the `current-scope` in line with the url use the `changeTo`-function and add something like the following to the initialization part of you application.
+
+```
+// The following code assumes you are using a Hash-Router
+// If this is not the case, don't use the `window.location.hash` leveraged below
+
+const sanitize = (arg: string) => arg.substring(1).split("&")[0];
+
+const beforeLocationChange = new CustomEvent("pushstate", {
+  detail: {},
+  bubbles: true,
+  cancelable: true,
+  composed: false,
+});
+
+const pushState = history.pushState;
+history.pushState = function () {
+  pushState.apply(
+    history,
+    arguments as unknown as [
+      data: any,
+      unused: string,
+      url?: string | URL | null | undefined
+    ]
+  );
+  window.dispatchEvent(beforeLocationChange);
+};
+
+window.addEventListener("pushstate", () => {
+  inject.changeTo(sanitize(window.location.hash));
+});
+
+window.addEventListener("popstate", () => {
+  inject.changeTo(sanitize(window.location.hash));
+});
+
+// enter initial scope (also enables deep reloads)
+inject.enter(sanitize(window.location.hash));
+```
+
+If you are wondering about the `CustomEvent`, the `history.pushState` function does currently not trigger an event on its own.
+
+### And you are done - Enjoy accessing singleton instances from where you want, and only from there.
 
 Instances and contained data will be dropped after a change to the `current-scope`, providing a particularly safe / clean working environment.
 
 ```
-inject.register(Test, '/test/:id', '/something/differen/test'
+inject.register(Test, '/test/:id', '/something/differen/test')
 inject.enter('/test/123');
 
 expect(inject.get(Test)).toBeDefined();
