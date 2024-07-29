@@ -3,7 +3,7 @@
 A multi-scope singleton injection-container intended for use in a Routed SPA, written in TypeScript.
 
 - Lazy initialization of instances
-- Automaticly drops stored instances if the scope changes to something they were intended for
+- Automaticly drops stored instances if the scope changes to something they weren't intended for
 
 ## Usage
 
