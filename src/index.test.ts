@@ -176,4 +176,24 @@ describe("Tests for Inject", () => {
       expect(foo).toBeDefined();
     });
   });
+
+  test("That custom IdPredicates Work", () => {
+    expect(() => {
+      const injectContainer = new InjectContainer();
+      injectContainer.register(Foo, "/foo/:id/bar");
+
+      expect(injectContainer.get(Foo)).toBeUndefined();
+
+      injectContainer.changeTo("/foo/6631954f159d5a4d2eb6efa1/bar");
+
+      expect(injectContainer.get(Foo)).toBeUndefined();
+
+      injectContainer.addIdPredicate((value: string) => {
+        const hexValues = /^[a-f\d]{24}$/i;
+        return hexValues.test(value);
+      });
+
+      expect(injectContainer.get(Foo)).toBeDefined();
+    });
+  });
 });

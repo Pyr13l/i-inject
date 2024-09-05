@@ -31,8 +31,14 @@ const assertDefined = <T extends {}>(item: T | undefined): NonNullable<T> => {
   throw new Error("Asserted value was undefined");
 };
 
-const isId = (value: string) =>
-  Boolean(Number(value)) || UUID_REGEX.test(value);
+type IdPredicate = (value: string) => boolean;
+
+const DEFAULT_ID_PREDICATES = [
+  (value: string) => Boolean(Number(value)),
+  (value: string) => UUID_REGEX.test(value),
+];
+
+const getDefaultIdPredicates = () => [...DEFAULT_ID_PREDICATES];
 
 export class InjectContainer {
   /** @internal */
@@ -40,6 +46,18 @@ export class InjectContainer {
 
   /** @internal */
   private definitions: InjectData<any> = {};
+
+  /** @internal */
+  private isId = (value: string) =>
+    this.idPredicates.reduce((acc, pattern) => {
+      if (acc) {
+        return acc;
+      }
+      return pattern(value);
+    }, false);
+
+  /** @internal */
+  private idPredicates: IdPredicate[] = [...DEFAULT_ID_PREDICATES];
 
   public register = <T extends InjectableClass<T>>(
     type: T,
@@ -84,6 +102,14 @@ export class InjectContainer {
     this.activeScopes.delete(oldScope);
 
     this.dropAllWithoutActiveScope();
+  };
+
+  public addIdPredicate = (predicate: IdPredicate) => {
+    this.idPredicates.push(predicate);
+  };
+
+  public resetPredicates = () => {
+    this.idPredicates = getDefaultIdPredicates();
   };
 
   /** @internal */
@@ -159,7 +185,7 @@ export class InjectContainer {
               result = true;
             } else if (
               scopeSegmentFromStore === ID_PLACEHOLDER &&
-              isId(activeScopeSegment)
+              this.isId(activeScopeSegment)
             ) {
               result = true;
             } else {
